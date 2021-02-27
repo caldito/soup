@@ -4,7 +4,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 #GOTEST=$(GOCMD) test
 #GOGET=$(GOCMD) get
-BINARY_NAME=soup
+BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
 
 all: build
