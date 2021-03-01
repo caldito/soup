@@ -1,41 +1,47 @@
 package main
 
-import "fmt"
-import "github.com/go-git/go-git/v5"
-import "github.com/go-git/go-git/v5/storage/memory"
-import "github.com/go-git/go-git/v5/plumbing"
-import "github.com/go-git/go-git/v5/plumbing/storer"
+import (
+	"fmt"
+	"strings"
+	git "github.com/go-git/go-git/v5"
+)
 
 
-func getRemoteBranches(s storer.ReferenceStorer) (storer.ReferenceIter, error) {
-	refs, err := s.IterReferences()
+func getBranchNames(r *git.Repository) ([]string, error) {
+	var branchNames []string
+	remote, err := r.Remote("origin")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	return storer.NewReferenceFilteredIter(func(ref *plumbing.Reference) bool {
-		return ref.Name().IsRemote()
-	}, refs), nil
+	refList, err := remote.List(&git.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	refPrefix := "refs/heads/"
+	for _, ref := range refList {
+		refName := ref.Name().String()
+		if !strings.HasPrefix(refName, refPrefix) {
+			continue
+		}
+		branchName := refName[len(refPrefix):]
+		branchNames = append(branchNames, branchName)
+	}
+	return branchNames, nil
 }
 
 func main() {
-	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+	// Clone repo
+	cloneLocation := "/tmp/soup"
+	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
 		URL: "https://github.com/caldito/ipwarn",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	branches, err := getRemoteBranches(r.Storer)
+	branchNames, err := getBranchNames(r)
 	if err != nil {
 		panic(err)
 	}
-
-	err = branches.ForEach(func(b *plumbing.Reference) error {
-		fmt.Println(b)
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
+	fmt.Print(branchNames)
 }
