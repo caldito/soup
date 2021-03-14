@@ -1,9 +1,12 @@
 package main
 
 import (
+	"os"
 	"fmt"
 	"strings"
+	"time"
 	git "github.com/go-git/go-git/v5"
+	config "github.com/go-git/go-git/v5/config"
 )
 
 
@@ -29,19 +32,51 @@ func getBranchNames(r *git.Repository) ([]string, error) {
 	return branchNames, nil
 }
 
-func main() {
+func run() error {
 	// Clone repo
 	cloneLocation := "/tmp/soup"
+	os.RemoveAll(cloneLocation)
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
 		URL: "https://github.com/caldito/ipwarn",
 	})
 	if err != nil {
 		panic(err)
 	}
-
+	// Get branch names
 	branchNames, err := getBranchNames(r)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Print(branchNames)
+	// Fetch branches
+	err = r.Fetch(&git.FetchOptions{
+        RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
+    })
+    if err != nil {
+        panic(err)
+    }
+	// Checkout to the branches and do GitOps stuff
+	w, _ := r.Worktree()
+	for _, branch := range branchNames {
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: fmt.Sprintf("refs/heads/%s", branch),
+			Force: true,
+		})
+		if err != nil {
+			panic(err)
+		}
+		// TODO GitOps stuff after checking branch
+		fmt.Sprintf("checkout to %s", branchName)
+	}
+	return nil
+}
+
+func main() {
+	for {
+		err := run()
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Second*30)
+	}
 }
