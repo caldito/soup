@@ -57,9 +57,9 @@ func run() error {
     }
 	// Checkout to the branches and do GitOps stuff
 	w, _ := r.Worktree()
-	for _, branch := range branchNames {
+	for _, branchName := range branchNames {
 		err = w.Checkout(&git.CheckoutOptions{
-			Branch: fmt.Sprintf("refs/heads/%s", branch),
+			Branch: fmt.Sprintf("refs/heads/%s", branchName),
 			Force: true,
 		})
 		if err != nil {
