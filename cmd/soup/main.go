@@ -7,6 +7,7 @@ import (
 	"time"
 	git "github.com/go-git/go-git/v5"
 	config "github.com/go-git/go-git/v5/config"
+	plumbing "github.com/go-git/go-git/v5/plumbing"
 )
 
 
@@ -32,12 +33,16 @@ func getBranchNames(r *git.Repository) ([]string, error) {
 	return branchNames, nil
 }
 
+func deploy() error {
+	return nil
+}
+
 func run() error {
 	// Clone repo
 	cloneLocation := "/tmp/soup"
 	os.RemoveAll(cloneLocation)
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
-		URL: "https://github.com/caldito/ipwarn",
+		URL: "https://github.com/caldito/soup-test",
 	})
 	if err != nil {
 		panic(err)
@@ -47,7 +52,6 @@ func run() error {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(branchNames)
 	// Fetch branches
 	err = r.Fetch(&git.FetchOptions{
         RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
@@ -59,14 +63,19 @@ func run() error {
 	w, _ := r.Worktree()
 	for _, branchName := range branchNames {
 		err = w.Checkout(&git.CheckoutOptions{
-			Branch: fmt.Sprintf("refs/heads/%s", branchName),
+			Branch: plumbing.ReferenceName("refs/heads/" + branchName),
 			Force: true,
 		})
 		if err != nil {
 			panic(err)
 		}
-		// TODO GitOps stuff after checking branch
-		fmt.Sprintf("checkout to %s", branchName)
+		// Deploy after checking branch
+		fmt.Println("Deploying branch " + branchName + "...")
+		err = deploy()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Branch " + branchName + " deployed")
 	}
 	return nil
 }
