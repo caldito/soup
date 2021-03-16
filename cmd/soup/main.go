@@ -5,38 +5,42 @@ import (
 	git "github.com/go-git/go-git/v5"
 	config "github.com/go-git/go-git/v5/config"
 	plumbing "github.com/go-git/go-git/v5/plumbing"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
-	"gopkg.in/yaml.v2"
-    "io/ioutil"
 )
 
-type namespace struct {
+// Configuration file structs and function
+
+type Namespace struct {
 	Namespace string
-	Branch string
+	Branch    string
 }
 
-type conf struct {
-    Namespaces []namespace
-    Files []string
+type Conf struct {
+	Namespaces  []Namespace
+	Files       []string
 	Directories []string
 }
 
-func (c *conf) getConf(cloneLocation string) *conf {
-    yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
-    if err != nil {
-        panic(err)
-    }
-    err = yaml.Unmarshal(yamlFile, c)
-    if err != nil {
-        panic(err)
-    }
-
-    return c
+func getConf(cloneLocation string) Conf {
+	var c Conf
+	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
 
-func getBranchNames(r *git.Repository) ([]string, error) {
+// Auxiliary functions
+
+func getBranchNames(r *git.Repository) []string {
 	var branchNames []string
 	remote, err := r.Remote("origin")
 	if err != nil {
@@ -55,13 +59,15 @@ func getBranchNames(r *git.Repository) ([]string, error) {
 		branchName := refName[len(refPrefix):]
 		branchNames = append(branchNames, branchName)
 	}
-	return branchNames, nil
+	return branchNames
 }
 
-func deploy(branch string, cloneLocation string) error {
-    var c conf
-    c.getConf(cloneLocation)
-	fmt.Println(c)
+// Core functions
+
+func deploy(branchName string, cloneLocation string) error {
+	// Get configuration from file
+	conf := getConf(cloneLocation)
+	fmt.Println(conf)
 	return nil
 }
 
@@ -75,10 +81,7 @@ func run() error {
 		panic(err)
 	}
 	// Get branch names
-	branchNames, err := getBranchNames(r)
-	if err != nil {
-		panic(err)
-	}
+	branchNames := getBranchNames(r)
 	// Fetch branches
 	err = r.Fetch(&git.FetchOptions{
 		RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
