@@ -13,14 +13,14 @@ import (
 )
 
 type namespace struct {
-	namespace string `yaml:"namespace"`
-	branch string `yaml:"branch"`
+	Namespace string
+	Branch string
 }
 
 type conf struct {
-    namespaces []namespace `yaml:"namespaces"`
-    files []string `yaml:"files"`
-	directories []string `yaml:"directories"`
+    Namespaces []namespace
+    Files []string
+	Directories []string
 }
 
 func (c *conf) getConf(cloneLocation string) *conf {
@@ -61,16 +61,13 @@ func getBranchNames(r *git.Repository) ([]string, error) {
 func deploy(branch string, cloneLocation string) error {
     var c conf
     c.getConf(cloneLocation)
-
-    fmt.Println(c)
+	fmt.Println(c)
 	return nil
 }
 
 func run() error {
 	// Clone repo
 	cloneLocation := fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
-	//cloneLocation := string("/" + time.Now().Unix())
-	fmt.Println(cloneLocation)
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
 		URL: "https://github.com/caldito/soup-test",
 	})
