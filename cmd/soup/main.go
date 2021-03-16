@@ -8,7 +8,33 @@ import (
 	"os"
 	"strings"
 	"time"
+	"gopkg.in/yaml.v2"
+    "io/ioutil"
 )
+
+type namespace struct {
+	namespace string `yaml:"namespace"`
+	branch string `yaml:"branch"`
+}
+
+type conf struct {
+    namespaces []namespace `yaml:"namespaces"`
+    files []string `yaml:"files"`
+	directories []string `yaml:"directories"`
+}
+
+func (c *conf) getConf(cloneLocation string) *conf {
+    yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
+    if err != nil {
+        panic(err)
+    }
+    err = yaml.Unmarshal(yamlFile, c)
+    if err != nil {
+        panic(err)
+    }
+
+    return c
+}
 
 func getBranchNames(r *git.Repository) ([]string, error) {
 	var branchNames []string
@@ -32,15 +58,19 @@ func getBranchNames(r *git.Repository) ([]string, error) {
 	return branchNames, nil
 }
 
-func deploy(branch string) error {
+func deploy(branch string, cloneLocation string) error {
+    var c conf
+    c.getConf(cloneLocation)
 
+    fmt.Println(c)
 	return nil
 }
 
 func run() error {
 	// Clone repo
-	cloneLocation := "/tmp/soup/" + string(time.Now().Unix())
-
+	cloneLocation := fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
+	//cloneLocation := string("/" + time.Now().Unix())
+	fmt.Println(cloneLocation)
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
 		URL: "https://github.com/caldito/soup-test",
 	})
@@ -71,7 +101,7 @@ func run() error {
 		}
 		// Deploy after checking branch
 		fmt.Println("Deploying branch " + branchName + "...")
-		err = deploy(branchName)
+		err = deploy(branchName, cloneLocation)
 		if err != nil {
 			panic(err)
 		}
