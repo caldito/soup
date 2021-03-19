@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -64,11 +65,22 @@ func getBranchNames(r *git.Repository) []string {
 
 func getNamespace(branchName string, conf Conf) string {
 	var namespace string = ""
-	for _, a := range conf.Namespaces{
-		if (a.Branch == branchName){
-			namespace = a.Namespace
+	for _, a := range conf.Namespaces {
+		matched, err := regexp.MatchString(a.Branch, branchName)
+		if err != nil {
+			panic(err)
+		}
+		if matched {
+			if a.Namespace == "as-branch" {
+				namespace = branchName
+			} else {
+				namespace = a.Namespace
+			}
+			// If the branch matches it returns from here
+			return namespace
 		}
 	}
+	// If the branch does not match any namespace it returns from here an empty string
 	return namespace
 }
 
@@ -78,11 +90,12 @@ func deploy(branchName string, cloneLocation string) error {
 	// Get configuration from file
 	var conf Conf = getConf(cloneLocation)
 	var namespace string = getNamespace(branchName, conf)
-	if (namespace == ""){
+	if namespace == "" {
 		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
 		return nil
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
+	// TODO deploy
 	return nil
 }
 

@@ -22,6 +22,8 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 
+fmt:
+	gofmt -w $(SOURCE_NAME)
 #deps:
 #	$(GOGET) github.com/markbates/goth
 #	$(GOGET) github.com/markbates/pop
