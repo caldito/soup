@@ -62,12 +62,27 @@ func getBranchNames(r *git.Repository) []string {
 	return branchNames
 }
 
+func getNamespace(branchName string, conf Conf) string {
+	var namespace string = ""
+	for _, a := range conf.Namespaces{
+		if (a.Branch == branchName){
+			namespace = a.Namespace
+		}
+	}
+	return namespace
+}
+
 // Core functions
 
 func deploy(branchName string, cloneLocation string) error {
 	// Get configuration from file
-	conf := getConf(cloneLocation)
-	fmt.Println(conf)
+	var conf Conf = getConf(cloneLocation)
+	var namespace string = getNamespace(branchName, conf)
+	if (namespace == ""){
+		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
+		return nil
+	}
+	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
 	return nil
 }
 
@@ -100,12 +115,10 @@ func run() error {
 			panic(err)
 		}
 		// Deploy after checking branch
-		fmt.Println("Deploying branch " + branchName + "...")
 		err = deploy(branchName, cloneLocation)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("Branch " + branchName + " deployed")
 	}
 	os.RemoveAll(cloneLocation)
 	return nil
