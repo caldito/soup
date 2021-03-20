@@ -15,12 +15,9 @@ import (
 )
 
 // Global variables
+var programConf ProgramConf
 
-var repo     string
-var interval int
-
-// Build configuration file structs and function
-
+// Structs
 type Namespace struct {
 	Namespace string
 	Branch    string
@@ -32,39 +29,12 @@ type BuildConf struct {
 	Directories []string
 }
 
-func getBuildConf(cloneLocation string) BuildConf {
-	var buildConf BuildConf
-	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(yamlFile, &buildConf)
-	if err != nil {
-		panic(err)
-	}
-	return buildConf
-}
-
-// Program configuration structs and function
-
-//type ProgramConf struct {
-//	Repo     string
-//	Interval int
-//}
-
-func init() {
-	//var programConf ProgramConf
-	flag.StringVar(&repo, "repo", "", "url of the repository")
-	flag.Parse()
-	if (repo == ""){
-		fmt.Println("Exiting, repo flag is not provided")
-		os.Exit(1)
-	}
-	flag.IntVar(&interval, "interval", 120, "execution interval")
+type ProgramConf struct {
+	Repo     string
+	Interval int
 }
 
 // Auxiliary functions
-
 func getBranchNames(r *git.Repository) []string {
 	var branchNames []string
 	remote, err := r.Remote("origin")
@@ -106,7 +76,30 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 	return ""
 }
 
+func getBuildConf(cloneLocation string) BuildConf {
+	var buildConf BuildConf
+	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(yamlFile, &buildConf)
+	if err != nil {
+		panic(err)
+	}
+	return buildConf
+}
+
 // Core functions
+func init() {
+	//var programConf ProgramConf
+	flag.StringVar(&programConf.Repo, "repo", "", "url of the repository")
+	flag.Parse()
+	if programConf.Repo == "" {
+		fmt.Println("Exiting, repo flag is not provided")
+		os.Exit(1)
+	}
+	flag.IntVar(&programConf.Interval, "interval", 120, "execution interval")
+}
 
 func deploy(branchName string, cloneLocation string) error {
 	// Get configuration from file
@@ -122,12 +115,10 @@ func deploy(branchName string, cloneLocation string) error {
 }
 
 func run() error {
-	// read config
-
 	// Clone repo
 	cloneLocation := fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
-		URL: repo,
+		URL: programConf.Repo,
 	})
 	if err != nil {
 		panic(err)
@@ -158,8 +149,8 @@ func run() error {
 		}
 	}
 	os.RemoveAll(cloneLocation)
-	fmt.Sprintf("%s%d%s", "Sleep ", interval, "s until next execution...")
-	time.Sleep(time.Second * time.Duration(interval))
+	fmt.Sprintf("%s%d%s", "Sleep ", programConf.Interval, "s until next execution...")
+	time.Sleep(time.Second * time.Duration(programConf.Interval))
 	return nil
 }
 
