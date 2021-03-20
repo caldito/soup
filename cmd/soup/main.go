@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	git "github.com/go-git/go-git/v5"
 	config "github.com/go-git/go-git/v5/config"
@@ -13,30 +14,53 @@ import (
 	"time"
 )
 
-// Configuration file structs and function
+// Global variables
+
+var repo     string
+var interval int
+
+// Build configuration file structs and function
 
 type Namespace struct {
 	Namespace string
 	Branch    string
 }
 
-type Conf struct {
+type BuildConf struct {
 	Namespaces  []Namespace
 	Files       []string
 	Directories []string
 }
 
-func getConf(cloneLocation string) Conf {
-	var c Conf
+func getBuildConf(cloneLocation string) BuildConf {
+	var buildConf BuildConf
 	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
 	if err != nil {
 		panic(err)
 	}
-	err = yaml.Unmarshal(yamlFile, &c)
+	err = yaml.Unmarshal(yamlFile, &buildConf)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	return buildConf
+}
+
+// Program configuration structs and function
+
+//type ProgramConf struct {
+//	Repo     string
+//	Interval int
+//}
+
+func init() {
+	//var programConf ProgramConf
+	flag.StringVar(&repo, "repo", "", "url of the repository")
+	flag.Parse()
+	if (repo == ""){
+		fmt.Println("Exiting, repo flag is not provided")
+		os.Exit(1)
+	}
+	flag.IntVar(&interval, "interval", 120, "execution interval")
 }
 
 // Auxiliary functions
@@ -63,9 +87,9 @@ func getBranchNames(r *git.Repository) []string {
 	return branchNames
 }
 
-func getNamespace(branchName string, conf Conf) string {
+func getNamespace(branchName string, buildConf BuildConf) string {
 	var namespace string = ""
-	for _, a := range conf.Namespaces {
+	for _, a := range buildConf.Namespaces {
 		matched, err := regexp.MatchString(a.Branch, branchName)
 		if err != nil {
 			panic(err)
@@ -76,20 +100,18 @@ func getNamespace(branchName string, conf Conf) string {
 			} else {
 				namespace = a.Namespace
 			}
-			// If the branch matches it returns from here
 			return namespace
 		}
 	}
-	// If the branch does not match any namespace it returns from here an empty string
-	return namespace
+	return ""
 }
 
 // Core functions
 
 func deploy(branchName string, cloneLocation string) error {
 	// Get configuration from file
-	var conf Conf = getConf(cloneLocation)
-	var namespace string = getNamespace(branchName, conf)
+	var buildConf BuildConf = getBuildConf(cloneLocation)
+	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
 		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
 		return nil
@@ -100,10 +122,12 @@ func deploy(branchName string, cloneLocation string) error {
 }
 
 func run() error {
+	// read config
+
 	// Clone repo
 	cloneLocation := fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
-		URL: "https://github.com/caldito/soup-test",
+		URL: repo,
 	})
 	if err != nil {
 		panic(err)
@@ -134,6 +158,8 @@ func run() error {
 		}
 	}
 	os.RemoveAll(cloneLocation)
+	fmt.Sprintf("%s%d%s", "Sleep ", interval, "s until next execution...")
+	time.Sleep(time.Second * time.Duration(interval))
 	return nil
 }
 
@@ -143,6 +169,5 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		time.Sleep(time.Second * 30)
 	}
 }

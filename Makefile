@@ -16,7 +16,7 @@ build:
 #	$(GOTEST) -v ./...
 
 run: build
-	./$(BINARY_NAME)
+	./$(BINARY_NAME) -repo https://github.com/caldito/soup-test.git
 
 clean: 
 	$(GOCLEAN)
