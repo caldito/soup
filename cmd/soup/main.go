@@ -24,9 +24,8 @@ type Namespace struct {
 }
 
 type BuildConf struct {
-	Namespaces  []Namespace
-	Files       []string
-	Directories []string
+	Namespaces []Namespace
+	Manifests  []string
 }
 
 type ProgramConf struct {
@@ -89,6 +88,11 @@ func getBuildConf(cloneLocation string) BuildConf {
 	return buildConf
 }
 
+func deploy(namespace string, manifests []string) error {
+	//fmt.Println(manifests)
+	return nil
+}
+
 // Core functions
 func init() {
 	//var programConf ProgramConf
@@ -101,16 +105,21 @@ func init() {
 	flag.IntVar(&programConf.Interval, "interval", 120, "execution interval")
 }
 
-func deploy(branchName string, cloneLocation string) error {
+func processBranch(branchName string, cloneLocation string) error {
 	// Get configuration from file
 	var buildConf BuildConf = getBuildConf(cloneLocation)
+	// Process configuration
 	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
 		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
 		return nil
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
-	// TODO deploy
+	// Deploy
+	err := deploy(namespace, buildConf.Manifests)
+	if err != nil {
+		panic(err)
+	}
 	return nil
 }
 
@@ -135,6 +144,7 @@ func run() error {
 	// Checkout to the branches and do GitOps stuff
 	w, _ := r.Worktree()
 	for _, branchName := range branchNames {
+		// Checkout
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.ReferenceName("refs/heads/" + branchName),
 			Force:  true,
@@ -142,14 +152,14 @@ func run() error {
 		if err != nil {
 			panic(err)
 		}
-		// Deploy after checking branch
-		err = deploy(branchName, cloneLocation)
+		// Process branch
+		err = processBranch(branchName, cloneLocation)
 		if err != nil {
 			panic(err)
 		}
 	}
 	os.RemoveAll(cloneLocation)
-	fmt.Sprintf("%s%d%s", "Sleep ", programConf.Interval, "s until next execution...")
+	fmt.Printf("%s%d%s", "Sleeping ", programConf.Interval, "s until next execution...\n\n")
 	time.Sleep(time.Second * time.Duration(programConf.Interval))
 	return nil
 }

@@ -2,8 +2,7 @@ Really basic tasks
 ------------------
 
 Deployment
-Installation in cluster
-Command line options (time between deploys and repository)
+Dockerize and easy installation in cluster
 
 
 Extra tasks (quite basic though)
