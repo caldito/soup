@@ -3,7 +3,6 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 #GOTEST=$(GOCMD) test
-#GOGET=$(GOCMD) get
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
 
@@ -24,6 +23,15 @@ clean:
 
 fmt:
 	gofmt -w $(SOURCE_NAME)
-#deps:
-#	$(GOGET) github.com/markbates/goth
-#	$(GOGET) github.com/markbates/pop
+
+build-podman: build
+	podman build . -t soup
+
+build-docker: build
+	docker build . -t soup
+
+run-podman: build-podman
+	podman run -it --entrypoint /bin/soup soup -repo https://github.com/caldito/soup-test.git
+
+run-docker: build-docker
+	docker run -it --entrypoint /bin/soup soup -repo https://github.com/caldito/soup-test.git

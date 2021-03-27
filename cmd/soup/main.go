@@ -38,10 +38,12 @@ func getBranchNames(r *git.Repository) []string {
 	var branchNames []string
 	remote, err := r.Remote("origin")
 	if err != nil {
+		fmt.Println("Error getting remote origin")
 		panic(err)
 	}
 	refList, err := remote.List(&git.ListOptions{})
 	if err != nil {
+		fmt.Println("Error getting branch list")
 		panic(err)
 	}
 	refPrefix := "refs/heads/"
@@ -61,6 +63,7 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 	for _, a := range buildConf.Namespaces {
 		matched, err := regexp.MatchString(a.Branch, branchName)
 		if err != nil {
+			fmt.Println("Error matching strings to get namespace")
 			panic(err)
 		}
 		if matched {
@@ -79,10 +82,12 @@ func getBuildConf(cloneLocation string) BuildConf {
 	var buildConf BuildConf
 	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
 	if err != nil {
+		fmt.Println("Error reading .soup file")
 		panic(err)
 	}
 	err = yaml.Unmarshal(yamlFile, &buildConf)
 	if err != nil {
+		fmt.Println("Error unmarshalling build conf")
 		panic(err)
 	}
 	return buildConf
@@ -95,14 +100,13 @@ func deploy(namespace string, manifests []string) error {
 
 // Core functions
 func init() {
-	//var programConf ProgramConf
 	flag.StringVar(&programConf.Repo, "repo", "", "url of the repository")
+	flag.IntVar(&programConf.Interval, "interval", 120, "execution interval")
 	flag.Parse()
 	if programConf.Repo == "" {
 		fmt.Println("Exiting, repo flag is not provided")
 		os.Exit(1)
 	}
-	flag.IntVar(&programConf.Interval, "interval", 120, "execution interval")
 }
 
 func processBranch(branchName string, cloneLocation string) error {
@@ -118,6 +122,7 @@ func processBranch(branchName string, cloneLocation string) error {
 	// Deploy
 	err := deploy(namespace, buildConf.Manifests)
 	if err != nil {
+		fmt.Println("Error deploying")
 		panic(err)
 	}
 	return nil
@@ -130,6 +135,7 @@ func run() error {
 		URL: programConf.Repo,
 	})
 	if err != nil {
+		fmt.Println("Error downloading repo")
 		panic(err)
 	}
 	// Get branch names
@@ -139,6 +145,7 @@ func run() error {
 		RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
 	})
 	if err != nil {
+		fmt.Println("Error fetching branches")
 		panic(err)
 	}
 	// Checkout to the branches and do GitOps stuff
@@ -150,11 +157,13 @@ func run() error {
 			Force:  true,
 		})
 		if err != nil {
+			fmt.Println("Error checking out to " + branchName)
 			panic(err)
 		}
 		// Process branch
 		err = processBranch(branchName, cloneLocation)
 		if err != nil {
+			fmt.Println("Error processing branch")
 			panic(err)
 		}
 	}
@@ -168,6 +177,7 @@ func main() {
 	for {
 		err := run()
 		if err != nil {
+			fmt.Println("Error in run() method")
 			panic(err)
 		}
 	}
