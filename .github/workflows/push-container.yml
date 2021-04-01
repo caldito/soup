@@ -1,0 +1,20 @@
+---
+
+name: Push container
+on:
+  release:
+    types:
+      - created
+    branches: 
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get tag, build and push
+      run: |
+        TAG=$(echo ${{ github.ref }} | sed 's/refs\/tags\///g')
+        docker build -t pablogcaldito/soup:"${TAG}" .
+        echo ${{ secrets.DOCKERHUB_PASS }} | docker login -u pablogcaldito --password-stdin
+        docker push pablogcaldito/soup:"${TAG}"
