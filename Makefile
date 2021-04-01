@@ -5,14 +5,12 @@ GOCLEAN=$(GOCMD) clean
 #GOTEST=$(GOCMD) test
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
+VERSION=0.1.0
 
 all: build
 
 build: 
 	$(GOBUILD) -o $(BINARY_NAME) -v $(SOURCE_NAME)
-
-#test: 
-#	$(GOTEST) -v ./...
 
 run: build
 	./$(BINARY_NAME) -repo https://github.com/caldito/soup-test.git
@@ -25,13 +23,13 @@ fmt:
 	gofmt -w $(SOURCE_NAME)
 
 build-podman: build
-	podman build . -t soup
+	podman build . -t pablogcaldito/soup:$(VERSION)
 
 build-docker: build
-	docker build . -t soup
+	docker build . -t pablogcaldito/soup:$(VERSION)
 
-run-podman: build-podman
-	podman run -it --entrypoint /bin/soup soup -repo https://github.com/caldito/soup-test.git
+test-podman: build-podman
+	podman run -it --entrypoint /bin/soup pablogcaldito/soup:$(VERSION) -repo https://github.com/caldito/soup-test.git
 
-run-docker: build-docker
-	docker run -it --entrypoint /bin/soup soup -repo https://github.com/caldito/soup-test.git
+test-docker: build-docker
+	docker run -it --entrypoint /bin/soup pablogcaldito/soup:$(VERSION) -repo https://github.com/caldito/soup-test.git
