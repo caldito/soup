@@ -9,12 +9,13 @@ on:
       - main
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: Get tag, build and push
       run: |
         TAG=$(echo ${{ github.ref }} | sed 's/refs\/tags\///g')
-        docker build -t pablogcaldito/soup:"${TAG}" .
+        sudo apt update && sudo apt install -y make
+        make build-docker
         echo ${{ secrets.DOCKERHUB_PASS }} | docker login -u pablogcaldito --password-stdin
         docker push pablogcaldito/soup:"${TAG}"
