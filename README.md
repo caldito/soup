@@ -19,10 +19,7 @@ kubectl apply -f install.yml
 ## Usage
 
 
-The command line arguments can be in this forms:
-```
--arg value
-```
+The command line arguments should be in this form:
 ```
 -arg=value
 ```
