@@ -160,10 +160,11 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 		return err
 	}
 
-	// 5. Obtain REST interface for the GVR
+	// 5. Obtain REST interface for the GVR and set namespace
 	var dr dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 		// namespaced resources should specify the namespace
+		obj.SetNamespace(namespace)
 		dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
 	} else {
 		// for cluster-wide resources
