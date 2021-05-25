@@ -2,6 +2,7 @@
 GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
+GODEPS=$(GOCMD) get
 #GOTEST=$(GOCMD) test
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
@@ -21,6 +22,9 @@ clean:
 
 fmt:
 	gofmt -w $(SOURCE_NAME)
+
+deps:
+	$(GODEPS) -d ./...
 
 build-podman: build
 	podman build . -t pablogcaldito/soup:$(VERSION)
