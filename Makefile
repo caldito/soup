@@ -6,12 +6,12 @@ GODEPS=$(GOCMD) get
 #GOTEST=$(GOCMD) test
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
-VERSION=0.1.0
+VERSION=0.1.0-rc3
 
 all: build
 
 build: 
-	$(GOBUILD) -o $(BINARY_NAME) -v $(SOURCE_NAME)
+	CGO_ENABLED=0 $(GOBUILD) -o $(BINARY_NAME) -v $(SOURCE_NAME)
 
 run: build
 	./$(BINARY_NAME) -repo https://github.com/caldito/soup-test.git

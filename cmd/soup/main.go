@@ -30,6 +30,7 @@ import (
 
 // Global variables
 var programConf ProgramConf
+var cloneLocation string
 
 // Structs
 type Namespace struct {
@@ -92,7 +93,7 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 	return ""
 }
 
-func getBuildConf(cloneLocation string) BuildConf {
+func getBuildConf() BuildConf {
 	var buildConf BuildConf
 	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
 	if err != nil {
@@ -142,10 +143,11 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 	}
 
 	// 3. Decode YAML manifest into unstructured.Unstructured
-	yamlFile, err := ioutil.ReadFile(manifest)
+	yamlFile, err := ioutil.ReadFile(cloneLocation + "/" + manifest)
 	if err != nil {
-		fmt.Println("Error reading manifest" + manifest)
-		return err
+		fmt.Println("Error reading manifest " + manifest)
+		// The program should not crash if the manifest path does not exist
+        return nil
 	}
 
 	obj := &unstructured.Unstructured{}
@@ -198,9 +200,9 @@ func init() {
 	}
 }
 
-func processBranch(branchName string, cloneLocation string) error {
+func processBranch(branchName string) error {
 	// Get configuration from file
-	var buildConf BuildConf = getBuildConf(cloneLocation)
+	var buildConf BuildConf = getBuildConf()
 	// Process configuration
 	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
@@ -219,7 +221,7 @@ func processBranch(branchName string, cloneLocation string) error {
 
 func run() error {
 	// Clone repo
-	cloneLocation := fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
+	cloneLocation = fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
 	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
 		URL: programConf.Repo,
 	})
@@ -250,7 +252,7 @@ func run() error {
 			panic(err)
 		}
 		// Process branch
-		err = processBranch(branchName, cloneLocation)
+		err = processBranch(branchName)
 		if err != nil {
 			fmt.Println("Error processing branch")
 			panic(err)
