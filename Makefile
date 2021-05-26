@@ -6,7 +6,7 @@ GODEPS=$(GOCMD) get
 #GOTEST=$(GOCMD) test
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
-VERSION=0.1.0-rc3
+VERSION=0.1.0-rc4
 
 all: build
 

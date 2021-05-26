@@ -87,6 +87,7 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 			} else {
 				namespace = a.Namespace
 			}
+            namespace = strings.ReplaceAll(namespace, "/", "-")
 			return namespace
 		}
 	}
