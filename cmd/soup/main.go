@@ -176,6 +176,11 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 
 	// 6. Marshal object into JSON
 	data, err := json.Marshal(obj)
+	// Debug
+	//{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"my-nginx","namespace":"features-1"},"spec":{"replicas":2,"selector":{"matchLabels":{"run":"my-nginx"}},"template":{"metadata":{"labels":{"run":"my-nginx"}},"spec":{"containers":[{"image":"nginx","name":"my-nginx","ports":[{"containerPort":80}]}]}}}}
+	//Error deploying the manifestdeployment.yml
+	//panic: failed to create typed patch object: .spec.template.spec.containers[name="my-nginx"].ports: element 0: associative list with keys has an element that omits key field "protocol"
+	fmt.Println(string(data))
 	if err != nil {
 		return err
 	}
