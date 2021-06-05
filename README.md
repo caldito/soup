@@ -2,6 +2,10 @@
 
 Soup is a GitOps operator for Kubernetes.
 
+## Requirements
+
+`Kubernetes >= v1.20`
+
 ## Installation
 
 Install in 3 easy steps:
