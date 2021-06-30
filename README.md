@@ -2,6 +2,10 @@
 
 Soup is a GitOps operator for Kubernetes.
 
+## Requirements
+
+`Kubernetes >= v1.20`
+
 ## Installation
 
 Install in 3 easy steps:
@@ -19,10 +23,7 @@ kubectl apply -f install.yml
 ## Usage
 
 
-The command line arguments can be in this forms:
-```
--arg value
-```
+The command line arguments should be in this form:
 ```
 -arg=value
 ```
