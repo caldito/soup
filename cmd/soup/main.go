@@ -117,14 +117,33 @@ func deploy(namespace string, manifests []string) error {
 			panic(err)
 		}
 		ctx := context.TODO()
-		err = ensureNamespaceExists(ctx, config, namespace)
+		// create file for ensuring namespace
+		file, err := os.Create("/tmp/soup/ns-creation.yml")
+		if err != nil {
+			fmt.Println("Error creating file for ensuring namespace " + namespace + " exists")
+			panic(err)
+		}
+		linesToWrite := []string{"kind: Namespace", "apiVersion: v1", "metadata:", "  name: " + namespace , "  labels:", "    name: " + namespace}
+		for _, line := range linesToWrite {
+			file.WriteString(line + "\n")
+		}
+		file.Close()
+		// SSA for namespace
+		err = doSSA(ctx, config, namespace, "/tmp/soup/ns-creation.yml")
 		if err != nil {
 			fmt.Println("Error creating namespace " + namespace)
 			panic(err)
 		}
-		err = doSSA(ctx, config, namespace, manifest)
+		// SSA for deploying the rest
+		err = doSSA(ctx, config, namespace, cloneLocation + "/" + manifest)
 		if err != nil {
 			fmt.Println("Error deploying the manifest " + manifest)
+			panic(err)
+		}
+		// delete file for ensuring namespace
+		err = os.Remove("/tmp/soup/ns-creation.yml")
+		if err != nil {
+			fmt.Println("Error deleting file for ensuring namespace " + namespace + " exists")
 			panic(err)
 		}
 	}
@@ -149,7 +168,7 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 	}
 
 	// 3. Decode YAML manifest into unstructured.Unstructured
-	yamlFile, err := ioutil.ReadFile(cloneLocation + "/" + manifest)
+	yamlFile, err := ioutil.ReadFile(manifest)
 	if err != nil {
 		fmt.Println("Error reading manifest " + manifest)
 		// The program should not crash if the manifest path does not exist
@@ -188,48 +207,6 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 	// 7. Create or Update the object with SSA
 	//     types.ApplyPatchType indicates SSA.
 	//     FieldManager specifies the field owner ID.
-	_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-		FieldManager: "sample-controller",
-	})
-	return err
-}
-
-func ensureNamespaceExists(ctx context.Context, cfg *rest.Config, namespace string) error {
-	var decUnstructured = yamlk8s.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-
-	// 1. Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
-	// 2. Prepare the dynamic client
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
-	// 3. Decode JSON namespace manifest into unstructured.Unstructured
-	obj := &unstructured.Unstructured{}
-	yamlFile := []byte("kind: Namespace\napiVersion: v1\nmetadata:\n  name: " + namespace + "\n  labels:\n    name: " + namespace)
-	_, gvk, err := decUnstructured.Decode(yamlFile, nil, obj)
-	if err != nil {
-		return err
-	}
-	// 4. Find GVR
-	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return err
-	}
-	// 5. Obtain REST interface for the GVR and set namespace
-	//var dr dynamic.ResourceInterface
-	dr := dyn.Resource(mapping.Resource)
-
-	// 6. Marshal object into JSON
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-	// 7. Create or Update the namespace with SSA
 	_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
 		FieldManager: "sample-controller",
 	})

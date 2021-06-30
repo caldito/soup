@@ -9,3 +9,4 @@ Extra tasks (quite basic though)
 Git authentication
 Improve error handling
 Delete resources when branches are deleted
+Extract doSSA function to a library
