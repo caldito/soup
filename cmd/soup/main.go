@@ -117,9 +117,14 @@ func deploy(namespace string, manifests []string) error {
 			panic(err)
 		}
 		ctx := context.TODO()
+		err = ensureNamespaceExists(ctx, config, namespace)
+		if err != nil {
+			fmt.Println("Error creating namespace " + namespace)
+			panic(err)
+		}
 		err = doSSA(ctx, config, namespace, manifest)
 		if err != nil {
-			fmt.Println("Error deploying the manifest" + manifest)
+			fmt.Println("Error deploying the manifest " + manifest)
 			panic(err)
 		}
 	}
@@ -176,11 +181,6 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 
 	// 6. Marshal object into JSON
 	data, err := json.Marshal(obj)
-	// Debug
-	//{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"my-nginx","namespace":"features-1"},"spec":{"replicas":2,"selector":{"matchLabels":{"run":"my-nginx"}},"template":{"metadata":{"labels":{"run":"my-nginx"}},"spec":{"containers":[{"image":"nginx","name":"my-nginx","ports":[{"containerPort":80}]}]}}}}
-	//Error deploying the manifestdeployment.yml
-	//panic: failed to create typed patch object: .spec.template.spec.containers[name="my-nginx"].ports: element 0: associative list with keys has an element that omits key field "protocol"
-	fmt.Println(string(data))
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,48 @@ func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 	_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
 		FieldManager: "sample-controller",
 	})
+	return err
+}
 
+func ensureNamespaceExists(ctx context.Context, cfg *rest.Config, namespace string) error {
+	var decUnstructured = yamlk8s.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+
+	// 1. Prepare a RESTMapper to find GVR
+	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return err
+	}
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+	// 2. Prepare the dynamic client
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+	// 3. Decode JSON namespace manifest into unstructured.Unstructured
+	obj := &unstructured.Unstructured{}
+	yamlFile := []byte("kind: Namespace\napiVersion: v1\nmetadata:\n  name: " + namespace + "\n  labels:\n    name: " + namespace)
+	_, gvk, err := decUnstructured.Decode(yamlFile, nil, obj)
+	if err != nil {
+		return err
+	}
+	// 4. Find GVR
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return err
+	}
+	// 5. Obtain REST interface for the GVR and set namespace
+	//var dr dynamic.ResourceInterface
+	dr := dyn.Resource(mapping.Resource)
+
+	// 6. Marshal object into JSON
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	// 7. Create or Update the namespace with SSA
+	_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+		FieldManager: "sample-controller",
+	})
 	return err
 }
 
