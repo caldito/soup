@@ -1,12 +1,5 @@
-Really basic tasks
-------------------
-
-Testing
-
-Extra tasks (quite basic though)
---------------------------------
-
+Automated tests
 Git authentication
-Improve error handling
-Delete resources when branches are deleted
-Extract doSSA function to a library
+Delete resources when branches are deleted, customize this behaviour with the .soup.yml depending on the branch
+Testing mode that does not try to deploy anything
+Nofify through teams, slack, etc. when there are errors
