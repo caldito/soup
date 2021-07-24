@@ -2,8 +2,8 @@ package k8s // import "github.com/caldito/soup/pkg/k8s"
 
 import (
 	"context"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"os"
 )
 
 func DoSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest string) error {
@@ -38,7 +39,7 @@ func DoSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 	if err != nil {
 		fmt.Println("Error reading manifest " + manifest)
 		// The program should not crash if the manifest path does not exist
-        return nil
+		return nil
 	}
 
 	obj := &unstructured.Unstructured{}
@@ -77,4 +78,31 @@ func DoSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest str
 		FieldManager: "sample-controller",
 	})
 	return err
+}
+
+func DeclareNamespaceSSA(ctx context.Context, config *rest.Config, namespace string) error {
+	// create namespace manifest
+	file, err := os.Create("/tmp/soup/ns-creation.yml")
+	if err != nil {
+		fmt.Println("Error creating file for ensuring namespace " + namespace + " exists")
+		panic(err)
+	}
+	linesToWrite := []string{"kind: Namespace", "apiVersion: v1", "metadata:", "  name: " + namespace, "  labels:", "    name: " + namespace}
+	for _, line := range linesToWrite {
+		file.WriteString(line + "\n")
+	}
+	file.Close()
+	// SSA for namespace
+	err = DoSSA(ctx, config, namespace, "/tmp/soup/ns-creation.yml")
+	if err != nil {
+		fmt.Println("Error creating namespace " + namespace)
+		panic(err)
+	}
+	// delete namespace manifest
+	err = os.Remove("/tmp/soup/ns-creation.yml")
+	if err != nil {
+		fmt.Println("Error deleting file for ensuring namespace " + namespace + " exists")
+		panic(err)
+	}
+	return nil
 }

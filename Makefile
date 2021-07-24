@@ -21,7 +21,7 @@ clean:
 	rm -f $(BINARY_NAME)
 
 fmt:
-	gofmt -w $(SOURCE_NAME)
+	gofmt -w .
 
 deps:
 	$(GODEPS) -d ./...
