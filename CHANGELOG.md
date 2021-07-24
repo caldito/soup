@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/caldito/soup/tree/develop)
+## [v0.3.0](https://github.com/caldito/soup/releases/tag/0.2.0) - 2021-07-24
 ### Added
 - Improve error handling when the .soup.yml file does not exist and can not be parsed
 - Extracted DoSSA and DeclareNamespaceSSA functions to `/pkg/k8s` directory to be imported easily by other projects
