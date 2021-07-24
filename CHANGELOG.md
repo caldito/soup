@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/caldito/soup/tree/develop)
 ### Added
+- Improve error handling when the .soup.yml file does not exist and can not be parsed
 - Extracted DoSSA and DeclareNamespaceSSA functions to `/pkg/k8s` directory to be imported easily by other projects
+- Refactoring
 ### Removed
 - Unused Makefile targets
 

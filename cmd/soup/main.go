@@ -86,19 +86,17 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 	return ""
 }
 
-func getBuildConf() BuildConf {
+func getBuildConf() (BuildConf, error) {
 	var buildConf BuildConf
 	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
 	if err != nil {
-		fmt.Println("Error reading .soup file")
-		panic(err)
+		return buildConf, err
 	}
 	err = yaml.Unmarshal(yamlFile, &buildConf)
 	if err != nil {
-		fmt.Println("Error unmarshalling build conf")
-		panic(err)
+		return buildConf, err
 	}
-	return buildConf
+	return buildConf, err
 }
 
 func deploy(namespace string, manifests []string) error {
@@ -136,7 +134,13 @@ func init() {
 
 func processBranch(branchName string) error {
 	// Get configuration from file
-	var buildConf BuildConf = getBuildConf()
+	var buildConf BuildConf 
+	buildConf, err := getBuildConf()
+	if err != nil {
+		// print no build conf found
+		fmt.Println("Skipping branch "+ branchName + ": Error reading or parsing file .soup.yml" )
+		return nil
+	}
 	// Process configuration
 	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
@@ -145,7 +149,7 @@ func processBranch(branchName string) error {
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
 	// Deploy
-	err := deploy(namespace, buildConf.Manifests)
+	err = deploy(namespace, buildConf.Manifests)
 	if err != nil {
 		fmt.Println("Error deploying")
 		panic(err)

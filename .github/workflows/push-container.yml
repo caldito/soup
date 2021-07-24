@@ -18,3 +18,4 @@ jobs:
         make build-docker
         echo ${{ secrets.DOCKERHUB_PASS }} | docker login -u pablogcaldito --password-stdin
         docker push pablogcaldito/soup:"${TAG}"
+        curl https://sum.golang.org/lookup/github.com/caldito/soup@${TAG}
