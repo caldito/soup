@@ -1,8 +1,11 @@
 package main
 
 import (
+	// from this repository
+	"github.com/caldito/soup/pkg/k8s"
+
+	// from other places
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	git "github.com/go-git/go-git/v5"
@@ -10,22 +13,11 @@ import (
 	plumbing "github.com/go-git/go-git/v5/plumbing"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"k8s.io/client-go/rest"
 	"os"
 	"regexp"
 	"strings"
 	"time"
-
-	// imports for doSSA
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	yamlk8s "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 )
 
 // Global variables
@@ -87,130 +79,46 @@ func getNamespace(branchName string, buildConf BuildConf) string {
 			} else {
 				namespace = a.Namespace
 			}
-            namespace = strings.ReplaceAll(namespace, "/", "-")
+			namespace = strings.ReplaceAll(namespace, "/", "-")
 			return namespace
 		}
 	}
 	return ""
 }
 
-func getBuildConf() BuildConf {
+func getBuildConf() (BuildConf, error) {
 	var buildConf BuildConf
 	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
 	if err != nil {
-		fmt.Println("Error reading .soup file")
-		panic(err)
+		return buildConf, err
 	}
 	err = yaml.Unmarshal(yamlFile, &buildConf)
 	if err != nil {
-		fmt.Println("Error unmarshalling build conf")
-		panic(err)
+		return buildConf, err
 	}
-	return buildConf
+	return buildConf, err
 }
 
 func deploy(namespace string, manifests []string) error {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		fmt.Println("Error getting cluster config")
+		panic(err)
+	}
+	ctx := context.TODO()
+	err = k8s.DeclareNamespaceSSA(ctx, config, namespace)
+	if err != nil {
+		fmt.Println("Error preparing namespace " + namespace)
+		panic(err)
+	}
 	for _, manifest := range manifests {
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			fmt.Println("Error getting cluster config")
-			panic(err)
-		}
-		ctx := context.TODO()
-		// create file for ensuring namespace
-		file, err := os.Create("/tmp/soup/ns-creation.yml")
-		if err != nil {
-			fmt.Println("Error creating file for ensuring namespace " + namespace + " exists")
-			panic(err)
-		}
-		linesToWrite := []string{"kind: Namespace", "apiVersion: v1", "metadata:", "  name: " + namespace , "  labels:", "    name: " + namespace}
-		for _, line := range linesToWrite {
-			file.WriteString(line + "\n")
-		}
-		file.Close()
-		// SSA for namespace
-		err = doSSA(ctx, config, namespace, "/tmp/soup/ns-creation.yml")
-		if err != nil {
-			fmt.Println("Error creating namespace " + namespace)
-			panic(err)
-		}
-		// SSA for deploying the rest
-		err = doSSA(ctx, config, namespace, cloneLocation + "/" + manifest)
+		err = k8s.DoSSA(ctx, config, namespace, cloneLocation+"/"+manifest)
 		if err != nil {
 			fmt.Println("Error deploying the manifest " + manifest)
 			panic(err)
 		}
-		// delete file for ensuring namespace
-		err = os.Remove("/tmp/soup/ns-creation.yml")
-		if err != nil {
-			fmt.Println("Error deleting file for ensuring namespace " + namespace + " exists")
-			panic(err)
-		}
 	}
 	return nil
-}
-
-// TODO export this function to package
-func doSSA(ctx context.Context, cfg *rest.Config, namespace string, manifest string) error {
-	var decUnstructured = yamlk8s.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-
-	// 1. Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
-
-	// 2. Prepare the dynamic client
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	// 3. Decode YAML manifest into unstructured.Unstructured
-	yamlFile, err := ioutil.ReadFile(manifest)
-	if err != nil {
-		fmt.Println("Error reading manifest " + manifest)
-		// The program should not crash if the manifest path does not exist
-        return nil
-	}
-
-	obj := &unstructured.Unstructured{}
-	_, gvk, err := decUnstructured.Decode(yamlFile, nil, obj)
-	if err != nil {
-		return err
-	}
-
-	// 4. Find GVR
-	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return err
-	}
-
-	// 5. Obtain REST interface for the GVR and set namespace
-	var dr dynamic.ResourceInterface
-	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		// namespaced resources should specify the namespace
-		obj.SetNamespace(namespace)
-		dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-	} else {
-		// for cluster-wide resources
-		dr = dyn.Resource(mapping.Resource)
-	}
-
-	// 6. Marshal object into JSON
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-
-	// 7. Create or Update the object with SSA
-	//     types.ApplyPatchType indicates SSA.
-	//     FieldManager specifies the field owner ID.
-	_, err = dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-		FieldManager: "sample-controller",
-	})
-	return err
 }
 
 // Core functions
@@ -226,7 +134,13 @@ func init() {
 
 func processBranch(branchName string) error {
 	// Get configuration from file
-	var buildConf BuildConf = getBuildConf()
+	var buildConf BuildConf 
+	buildConf, err := getBuildConf()
+	if err != nil {
+		// print no build conf found
+		fmt.Println("Skipping branch "+ branchName + ": Error reading or parsing file .soup.yml" )
+		return nil
+	}
 	// Process configuration
 	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
@@ -235,7 +149,7 @@ func processBranch(branchName string) error {
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
 	// Deploy
-	err := deploy(namespace, buildConf.Manifests)
+	err = deploy(namespace, buildConf.Manifests)
 	if err != nil {
 		fmt.Println("Error deploying")
 		panic(err)
