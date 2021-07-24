@@ -13,9 +13,6 @@ all: build
 build: 
 	CGO_ENABLED=0 $(GOBUILD) -o $(BINARY_NAME) -v $(SOURCE_NAME)
 
-run: build
-	./$(BINARY_NAME) -repo https://github.com/caldito/soup-test.git
-
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
@@ -31,9 +28,3 @@ build-podman: build
 
 build-docker: build
 	docker build . -t pablogcaldito/soup:$(VERSION)
-
-test-podman: build-podman
-	podman run -it --entrypoint /bin/soup pablogcaldito/soup:$(VERSION) -repo https://github.com/caldito/soup-test.git
-
-test-docker: build-docker
-	docker run -it --entrypoint /bin/soup pablogcaldito/soup:$(VERSION) -repo https://github.com/caldito/soup-test.git

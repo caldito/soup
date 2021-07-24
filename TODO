@@ -3,6 +3,5 @@ Git authentication
 Improve error handling
 Do not stop the execution when a branch does not have .soup.yml
 Delete resources when branches are deleted, customize this behaviour with the .soup.yml depending on the branch
-Extract doSSA function to a library
 Testing mode that does not try to deploy anything
 Nofify through teams, slack, etc. when there are errors
