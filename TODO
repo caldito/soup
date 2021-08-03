@@ -2,6 +2,4 @@ Automated tests
 Git authentication
 Delete resources when branches are deleted, customize this behaviour with the .soup.yml depending on the branch
 Having two modes: in and out of the cluster execution
-Testing mode that does not try to deploy anything
-Nofify through teams, slack, etc. when there are errors
 Signal handling
