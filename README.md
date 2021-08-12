@@ -7,6 +7,8 @@
 
 Soup is a GitOps operator for Kubernetes.
 
+<img src="docs/system-overview.png" alt="drawing" width="600"/>
+
 ## Requirements
 
 `Kubernetes >= v1.20`
