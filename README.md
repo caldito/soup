@@ -7,7 +7,7 @@
 
 Soup is a GitOps operator for Kubernetes.
 
-<img src="docs/system-overview.png" alt="drawing" width="600"/>
+<img src="docs/system-overview.png" alt="drawing" width="700"/>
 
 ## Requirements
 
