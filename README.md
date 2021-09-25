@@ -7,7 +7,7 @@
 
 Soup is a GitOps operator for Kubernetes.
 
-## Features
+## Why Soup
 * Focused on design and usage simplicity.
 * Deployment to kubernetes performed with [Server-Side Apply](https://kubernetes.io/docs/reference/using-api/server-side-apply/).
 * Match branch names with Regex.
@@ -49,6 +49,6 @@ Available arguments:
 * interval: the sync interval in seconds. By default is set to 120s.
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcomed and encouraged. For feature requests and bug reports, please open an issue.
 
 An internal diagram which may be useful for contributors can be found in [docs/images/internals.png](https://github.com/caldito/soup/blob/develop/docs/images/internals.png).
