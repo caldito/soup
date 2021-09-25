@@ -1,0 +1,17 @@
+---
+
+# This array is used to know where to deploy each branch. Processed for every branch available in the repository.
+namespaces:
+  # Manifests in main branch will be deployed to production namespace
+  - namespace: production
+    branch: main
+  # Manifests in develop branch will be deployed to staging namespace
+  - namespace: staging
+    branch: develop
+  # This deploys all features/* branches to a namespace called as the branch matching the regex
+  - namespace: as-branch
+    branch: features/*
+# This indicates which manifests will be deployed
+manifests:
+  - deployment.yml
+  - service.yml
