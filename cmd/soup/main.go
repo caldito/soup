@@ -2,10 +2,8 @@ package main
 
 import (
 	// from this repository
-	"github.com/caldito/soup/pkg/k8s"
-
+	"github.com/caldito/soup/internal/deployment"
 	// from other places
-	"context"
 	"flag"
 	"fmt"
 	git "github.com/go-git/go-git/v5"
@@ -13,7 +11,6 @@ import (
 	plumbing "github.com/go-git/go-git/v5/plumbing"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"k8s.io/client-go/rest"
 	"os"
 	"regexp"
 	"strings"
@@ -99,28 +96,6 @@ func getBuildConf() (BuildConf, error) {
 	return buildConf, err
 }
 
-func deploy(namespace string, manifests []string) error {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		fmt.Println("Error getting cluster config")
-		panic(err)
-	}
-	ctx := context.TODO()
-	err = k8s.DeclareNamespaceSSA(ctx, config, namespace)
-	if err != nil {
-		fmt.Println("Error preparing namespace " + namespace)
-		panic(err)
-	}
-	for _, manifest := range manifests {
-		err = k8s.DoSSA(ctx, config, namespace, cloneLocation+"/"+manifest)
-		if err != nil {
-			fmt.Println("Error deploying the manifest " + manifest)
-			panic(err)
-		}
-	}
-	return nil
-}
-
 // Core functions
 func init() {
 	flag.StringVar(&programConf.Repo, "repo", "", "url of the repository")
@@ -134,11 +109,11 @@ func init() {
 
 func processBranch(branchName string) error {
 	// Get configuration from file
-	var buildConf BuildConf 
+	var buildConf BuildConf
 	buildConf, err := getBuildConf()
 	if err != nil {
 		// print no build conf found
-		fmt.Println("Skipping branch "+ branchName + ": Error reading or parsing file .soup.yml" )
+		fmt.Println("Skipping branch " + branchName + ": Error reading or parsing file .soup.yml")
 		return nil
 	}
 	// Process configuration
@@ -148,8 +123,8 @@ func processBranch(branchName string) error {
 		return nil
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
-	// Deploy
-	err = deploy(namespace, buildConf.Manifests)
+	// Deploy module
+	err = deployment.Deploy(namespace, buildConf.Manifests, cloneLocation)
 	if err != nil {
 		fmt.Println("Error deploying")
 		panic(err)
@@ -197,8 +172,6 @@ func run() error {
 		}
 	}
 	os.RemoveAll(cloneLocation)
-	fmt.Printf("%s%d%s", "Sleeping ", programConf.Interval, "s until next execution...\n\n")
-	time.Sleep(time.Second * time.Duration(programConf.Interval))
 	return nil
 }
 
@@ -209,5 +182,7 @@ func main() {
 			fmt.Println("Error in run() method")
 			panic(err)
 		}
+		fmt.Printf("%s%d%s", "Sleeping ", programConf.Interval, "s until next execution...\n\n")
+		time.Sleep(time.Second * time.Duration(programConf.Interval))
 	}
 }
