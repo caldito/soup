@@ -2,6 +2,7 @@ package main
 
 import (
 	// from this repository
+	"github.com/caldito/soup/internal/confprocessing"
 	"github.com/caldito/soup/internal/deployment"
 	// from other places
 	"flag"
@@ -9,10 +10,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	config "github.com/go-git/go-git/v5/config"
 	plumbing "github.com/go-git/go-git/v5/plumbing"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -20,17 +18,6 @@ import (
 // Global variables
 var programConf ProgramConf
 var cloneLocation string
-
-// Structs
-type Namespace struct {
-	Namespace string
-	Branch    string
-}
-
-type BuildConf struct {
-	Namespaces []Namespace
-	Manifests  []string
-}
 
 type ProgramConf struct {
 	Repo     string
@@ -62,40 +49,6 @@ func getBranchNames(r *git.Repository) []string {
 	return branchNames
 }
 
-func getNamespace(branchName string, buildConf BuildConf) string {
-	var namespace string = ""
-	for _, a := range buildConf.Namespaces {
-		matched, err := regexp.MatchString(a.Branch, branchName)
-		if err != nil {
-			fmt.Println("Error matching strings to get namespace")
-			panic(err)
-		}
-		if matched {
-			if a.Namespace == "as-branch" {
-				namespace = branchName
-			} else {
-				namespace = a.Namespace
-			}
-			namespace = strings.ReplaceAll(namespace, "/", "-")
-			return namespace
-		}
-	}
-	return ""
-}
-
-func getBuildConf() (BuildConf, error) {
-	var buildConf BuildConf
-	yamlFile, err := ioutil.ReadFile(cloneLocation + "/.soup.yml")
-	if err != nil {
-		return buildConf, err
-	}
-	err = yaml.Unmarshal(yamlFile, &buildConf)
-	if err != nil {
-		return buildConf, err
-	}
-	return buildConf, err
-}
-
 // Core functions
 func init() {
 	flag.StringVar(&programConf.Repo, "repo", "", "url of the repository")
@@ -108,23 +61,17 @@ func init() {
 }
 
 func processBranch(branchName string) error {
-	// Get configuration from file
-	var buildConf BuildConf
-	buildConf, err := getBuildConf()
+	// Deployment configuration processing
+	namespace, manifests, err := confprocessing.ProcessConf(branchName, cloneLocation)
 	if err != nil {
-		// print no build conf found
-		fmt.Println("Skipping branch " + branchName + ": Error reading or parsing file .soup.yml")
-		return nil
+		fmt.Println("Error processing branch")
+		panic(err)
 	}
-	// Process configuration
-	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
-		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
 		return nil
 	}
-	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
-	// Deploy module
-	err = deployment.Deploy(namespace, buildConf.Manifests, cloneLocation)
+	// Deployment module
+	err = deployment.Deploy(namespace, manifests, cloneLocation)
 	if err != nil {
 		fmt.Println("Error deploying")
 		panic(err)
