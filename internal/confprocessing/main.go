@@ -58,15 +58,12 @@ func ProcessConf(branchName string, cloneLocation string) (string, []string, err
 	if err != nil {
 		// print no build conf found
 		fmt.Println("Skipping branch " + branchName + ": Error reading or parsing file .soup.yml")
-		var emptyarr []string
-		return "", emptyarr, nil
+		return "", nil, nil
 	}
-	// Process configuration
 	var namespace string = getNamespace(branchName, buildConf)
 	if namespace == "" {
 		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
-		var emptyarray []string
-		return "", emptyarray, nil
+		return "", nil, nil
 	}
 	fmt.Println("Deploying branch " + branchName + " to namespace " + namespace)
 	return namespace, buildConf.Manifests, nil

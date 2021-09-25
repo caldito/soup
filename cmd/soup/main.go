@@ -2,134 +2,32 @@ package main
 
 import (
 	// from this repository
-	"github.com/caldito/soup/internal/confprocessing"
-	"github.com/caldito/soup/internal/deployment"
+	"github.com/caldito/soup/internal/git"
+
 	// from other places
 	"flag"
 	"fmt"
-	git "github.com/go-git/go-git/v5"
-	config "github.com/go-git/go-git/v5/config"
-	plumbing "github.com/go-git/go-git/v5/plumbing"
 	"os"
-	"strings"
 	"time"
 )
 
-// Global variables
-var programConf ProgramConf
-var cloneLocation string
-
-type ProgramConf struct {
-	Repo     string
-	Interval int
-}
-
-// Auxiliary functions
-func getBranchNames(r *git.Repository) []string {
-	var branchNames []string
-	remote, err := r.Remote("origin")
-	if err != nil {
-		fmt.Println("Error getting remote origin")
-		panic(err)
-	}
-	refList, err := remote.List(&git.ListOptions{})
-	if err != nil {
-		fmt.Println("Error getting branch list")
-		panic(err)
-	}
-	refPrefix := "refs/heads/"
-	for _, ref := range refList {
-		refName := ref.Name().String()
-		if !strings.HasPrefix(refName, refPrefix) {
-			continue
-		}
-		branchName := refName[len(refPrefix):]
-		branchNames = append(branchNames, branchName)
-	}
-	return branchNames
-}
-
-// Core functions
-func init() {
-	flag.StringVar(&programConf.Repo, "repo", "", "url of the repository")
-	flag.IntVar(&programConf.Interval, "interval", 120, "execution interval")
-	flag.Parse()
-	if programConf.Repo == "" {
-		fmt.Println("Exiting, repo flag is not provided")
-		os.Exit(1)
-	}
-}
-
-func processBranch(branchName string) error {
-	// Deployment configuration processing
-	namespace, manifests, err := confprocessing.ProcessConf(branchName, cloneLocation)
-	if err != nil {
-		fmt.Println("Error processing branch")
-		panic(err)
-	}
-	if namespace == "" {
-		return nil
-	}
-	// Deployment module
-	err = deployment.Deploy(namespace, manifests, cloneLocation)
-	if err != nil {
-		fmt.Println("Error deploying")
-		panic(err)
-	}
-	return nil
-}
-
-func run() error {
-	// Clone repo
-	cloneLocation = fmt.Sprintf("%s%d", "/tmp/soup/", time.Now().Unix())
-	r, err := git.PlainClone(cloneLocation, false, &git.CloneOptions{
-		URL: programConf.Repo,
-	})
-	if err != nil {
-		fmt.Println("Error downloading repo")
-		panic(err)
-	}
-	// Get branch names
-	branchNames := getBranchNames(r)
-	// Fetch branches
-	err = r.Fetch(&git.FetchOptions{
-		RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
-	})
-	if err != nil {
-		fmt.Println("Error fetching branches")
-		panic(err)
-	}
-	// Checkout to the branches and do GitOps stuff
-	w, _ := r.Worktree()
-	for _, branchName := range branchNames {
-		// Checkout
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.ReferenceName("refs/heads/" + branchName),
-			Force:  true,
-		})
-		if err != nil {
-			fmt.Println("Error checking out to " + branchName)
-			panic(err)
-		}
-		// Process branch
-		err = processBranch(branchName)
-		if err != nil {
-			fmt.Println("Error processing branch")
-			panic(err)
-		}
-	}
-	os.RemoveAll(cloneLocation)
-	return nil
-}
-
 func main() {
+	var repo string
+	var interval int
+	flag.StringVar(&repo, "repo", "", "url of the repository")
+	flag.IntVar(&interval, "interval", 120, "execution interval")
+	flag.Parse()
+	if repo == "" {
+		fmt.Println("Exiting, repo flag is not provided")
+		os.Exit(2)
+	}
 	for {
-		err := run()
+		err := git.LoopBranches(repo)
 		if err != nil {
 			fmt.Println("Error in run() method")
-			panic(err)
+			os.Exit(1)
 		}
-		fmt.Printf("%s%d%s", "Sleeping ", programConf.Interval, "s until next execution...\n\n")
-		time.Sleep(time.Second * time.Duration(programConf.Interval))
+		fmt.Printf("%s%d%s", "Sleeping ", interval, "s until next execution...\n\n")
+		time.Sleep(time.Second * time.Duration(interval))
 	}
 }
