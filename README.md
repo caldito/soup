@@ -9,11 +9,13 @@ Soup is a GitOps operator for Kubernetes.
 
 ## Why Soup
 * Focused on design and usage simplicity.
-* Deployment to kubernetes performed with [Server-Side Apply](https://kubernetes.io/docs/reference/using-api/server-side-apply/).
+* Deployment to kubernetes performed with [Server-Side Apply](https://kubernetes.io/docs/reference/using-api/server-side-apply/), allows a simple yet fully capable deployment module for all type of resources.
 * Match branch names with Regex.
 * Option to create namespaces called the same way as the branch. Useful in combination with the regex branch selector.
 
-Image [docs/images/overview.png](https://github.com/caldito/soup/blob/develop/docs/images/overview.png) shows an overview on how the system works.
+Image [docs/images/overview.png](https://github.com/caldito/soup/blob/main/docs/images/overview.png) shows an overview on how the system works.
+
+You can watch the following [demo](https://asciinema.org/a/439238) of Soup working.
 
 ## Getting started
 ### Prerequisites
@@ -37,7 +39,7 @@ kubectl apply -f install.yml
 ## Usage
 
 ### Deployment Configuration file
-Soup reads a file named `.soup.yml` on the repository branches in order to know what to deploy and in which namespace. An example can be found in [docs/examples/.soup.yml](https://github.com/caldito/soup/blob/develop/docs/examples/.soup.yml).
+Soup reads a file named `.soup.yml` on the repository branches in order to know what to deploy and in which namespace. An example can be found in [docs/examples/.soup.yml](https://github.com/caldito/soup/blob/main/docs/examples/.soup.yml).
 
 ### Arguments
 The command line arguments should be in this form:
@@ -49,6 +51,8 @@ Available arguments:
 * interval: the sync interval in seconds. By default is set to 120s.
 
 ## Contributing
-Pull requests are welcomed and encouraged. For feature requests and bug reports, please open an issue.
+Pull requests are welcomed and encouraged. For questions, feature requests and bug reports, please open an issue.
 
-An internal diagram which may be useful for contributors can be found in [docs/images/internals.png](https://github.com/caldito/soup/blob/develop/docs/images/internals.png).
+There is also a [TODO](https://github.com/caldito/soup/blob/main/TODO) file containing work planned to do.
+
+An internal diagram which may be useful for contributors can be found in [docs/images/internals.png](https://github.com/caldito/soup/blob/main/docs/images/internals.png).
