@@ -38,10 +38,23 @@ func TestGetManifests(t *testing.T) {
 	if len(manifests) != 3 {
 		t.Fatalf(`expencting 3 manifests but returning `+fmt.Sprint(len(manifests)))
 	}
-	a := []string{cloneLocation+"/a.yml", cloneLocation+"/b.yml", cloneLocation+"/c/d.yml"}
-	for i, v := range a {
+	expectedSlice := []string{cloneLocation+"/a.yml", cloneLocation+"/b.yml", cloneLocation+"/c/d.yml"}
+	for i, v := range expectedSlice {
         if v != manifests[i] {
             t.Fatalf(`expected manifests mismatch`)
+        }
+    }
+}
+
+func TestRemoveDuplicateStr(t *testing.T) {
+	result := removeDuplicateStr([]string{"aa","aa","bb","aa"})
+	if len(result) != 2 {
+		t.Fatalf(`expencting 2 manifests but returning `+fmt.Sprint(len(result)))
+	}
+	expectedSlice := []string{"aa","bb"}
+	for i, v := range expectedSlice {
+        if v != result[i] {
+            t.Fatalf(`expected slice mismatch`)
         }
     }
 }
