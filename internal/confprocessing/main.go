@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"path/filepath"
 	"regexp"
 	"strings"
-	"path/filepath"
 )
 
 type Namespace struct {
@@ -24,7 +24,7 @@ func getNamespace(branchName string, namespaces []Namespace) (string, error) {
 	for _, a := range namespaces {
 		matched, err := regexp.MatchString(a.Branch, branchName)
 		if err != nil {
-			fmt.Println("Error matching strings to get namespace. Branch regex \""+a.Branch+"\" not valid")
+			fmt.Println("Error matching strings to get namespace. Branch regex \"" + a.Branch + "\" not valid")
 			continue
 		}
 		if matched {
@@ -40,14 +40,14 @@ func getNamespace(branchName string, namespaces []Namespace) (string, error) {
 	return "", nil
 }
 
-func getManifests(cloneLocation string, manifestPatterns []string) ([]string, error){
+func getManifests(cloneLocation string, manifestPatterns []string) ([]string, error) {
 	var processedManifests []string
 	for _, manifestPattern := range manifestPatterns {
 		manifests, err := filepath.Glob(cloneLocation + "/" + manifestPattern)
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("Error processing the following manifests regex:" + manifestPattern +
-						"  You can find how to form the regex here: https://pkg.go.dev/path/filepath#Match")
+				"  You can find how to form the regex here: https://pkg.go.dev/path/filepath#Match")
 		} else {
 			processedManifests = append(processedManifests, manifests...)
 		}
@@ -57,15 +57,15 @@ func getManifests(cloneLocation string, manifestPatterns []string) ([]string, er
 }
 
 func removeDuplicateStr(strSlice []string) []string {
-    allKeys := make(map[string]bool)
-    list := []string{}
-    for _, item := range strSlice {
-        if _, value := allKeys[item]; !value {
-            allKeys[item] = true
-            list = append(list, item)
-        }
-    }
-    return list
+	allKeys := make(map[string]bool)
+	list := []string{}
+	for _, item := range strSlice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
 }
 
 func getBuildConf(cloneLocation string) (BuildConf, error) {
@@ -94,7 +94,7 @@ func ProcessConf(branchName string, cloneLocation string) (string, []string, err
 		fmt.Println("Branch " + branchName + " does not match with any namespace to be deployed")
 		return "", nil, nil
 	}
-	processedManifests, err := getManifests(cloneLocation,buildConf.Manifests)
+	processedManifests, err := getManifests(cloneLocation, buildConf.Manifests)
 	if err != nil {
 		fmt.Println("Skipping branch " + branchName + ": Error getting manifest files")
 		return "", nil, nil

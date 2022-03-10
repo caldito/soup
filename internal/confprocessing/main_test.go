@@ -2,9 +2,9 @@ package confprocessing
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
-	"os"
 )
 
 func TestGetManifests(t *testing.T) {
@@ -22,41 +22,41 @@ func TestGetManifests(t *testing.T) {
 	if err != nil {
 		t.Fatalf(`failed preparing test`)
 		panic(err)
-    }
+	}
 	f.Close()
 	os.Mkdir(cloneLocation+"/c", 0755)
 	f, err = os.Create(cloneLocation + "/c/d.yml")
 	if err != nil {
 		t.Fatalf(`failed preparing test`)
 		panic(err)
-    }
+	}
 	// test
-	manifests, err := getManifests(cloneLocation, []string{"*.yml","*.yml","*/*.yml"})
+	manifests, err := getManifests(cloneLocation, []string{"*.yml", "*.yml", "*/*.yml"})
 	if err != nil {
 		t.Fatalf(`findFilesByRegex returning an error`)
 	}
 	if len(manifests) != 3 {
-		t.Fatalf(`expencting 3 manifests but returning `+fmt.Sprint(len(manifests)))
+		t.Fatalf(`expencting 3 manifests but returning ` + fmt.Sprint(len(manifests)))
 	}
-	expectedSlice := []string{cloneLocation+"/a.yml", cloneLocation+"/b.yml", cloneLocation+"/c/d.yml"}
+	expectedSlice := []string{cloneLocation + "/a.yml", cloneLocation + "/b.yml", cloneLocation + "/c/d.yml"}
 	for i, v := range expectedSlice {
-        if v != manifests[i] {
-            t.Fatalf(`expected manifests mismatch`)
-        }
-    }
+		if v != manifests[i] {
+			t.Fatalf(`expected manifests mismatch`)
+		}
+	}
 }
 
 func TestRemoveDuplicateStr(t *testing.T) {
-	result := removeDuplicateStr([]string{"aa","aa","bb","aa"})
+	result := removeDuplicateStr([]string{"aa", "aa", "bb", "aa"})
 	if len(result) != 2 {
-		t.Fatalf(`expencting 2 manifests but returning `+fmt.Sprint(len(result)))
+		t.Fatalf(`expencting 2 manifests but returning ` + fmt.Sprint(len(result)))
 	}
-	expectedSlice := []string{"aa","bb"}
+	expectedSlice := []string{"aa", "bb"}
 	for i, v := range expectedSlice {
-        if v != result[i] {
-            t.Fatalf(`expected slice mismatch`)
-        }
-    }
+		if v != result[i] {
+			t.Fatalf(`expected slice mismatch`)
+		}
+	}
 }
 
 func TestGetBuildConfNoRepoDirectory(t *testing.T) {
