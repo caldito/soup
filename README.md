@@ -4,6 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/caldito/soup.svg)](https://pkg.go.dev/github.com/caldito/soup)
 [![Go Report Card](https://goreportcard.com/badge/github.com/caldito/soup)](https://goreportcard.com/report/github.com/caldito/soup)
 [![release](https://img.shields.io/github/release/caldito/soup/all.svg)](https://github.com/caldito/soup/releases)
+![tests workflow](https://github.com/caldito/soup/actions/workflows/tests.yml/badge.svg)
 
 Soup is a GitOps operator for Kubernetes.
 
@@ -11,6 +12,7 @@ Soup is a GitOps operator for Kubernetes.
 * Focused on design and usage simplicity.
 * Deployment to kubernetes performed with [Server-Side Apply](https://kubernetes.io/docs/reference/using-api/server-side-apply/), allows a simple yet fully capable deployment module for all type of resources.
 * Match branch names with Regex.
+* Match manifests names with patterns.
 * Option to create namespaces called the same way as the branch. Useful in combination with the regex branch selector.
 
 Image [docs/images/overview.png](https://github.com/caldito/soup/blob/main/docs/images/overview.png) shows an overview on how the system works.

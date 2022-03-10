@@ -5,7 +5,7 @@ on:
   release:
     types:
       - created
-    branches: 
+    branches:
       - main
 jobs:
   build:
