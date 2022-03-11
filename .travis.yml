@@ -1,0 +1,15 @@
+---
+arch:
+  - amd64
+  - arm64
+dist: focal
+language: go
+go:
+  - "1.16"
+os: linux
+services:
+  - docker
+jobs:
+  include:
+    - stage: test
+      script: make test
