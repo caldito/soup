@@ -11,5 +11,5 @@ services:
   - docker
 jobs:
   include:
-    - stage: test
-      script: "make test"
+    - stage: Test
+      script: make test
