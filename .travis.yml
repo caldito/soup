@@ -9,7 +9,4 @@ go:
 os: linux
 services:
   - docker
-jobs:
-  include:
-    - stage: Test
-      script: make test
+script: make test
