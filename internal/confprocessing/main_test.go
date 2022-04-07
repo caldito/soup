@@ -59,6 +59,45 @@ func TestRemoveDuplicateStr(t *testing.T) {
 	}
 }
 
+func TestGetNamespaceExactBranchName(t *testing.T) {
+	var ns Namespace;
+	ns.Namespace = "prod"
+	ns.Branch = "main"
+	result, err := getNamespace("main",[]Namespace{ns})
+	if err != nil {
+		t.Fatalf(`getNamespace returning an error`)
+	}
+	if result != "prod" {
+		t.Fatalf(`Unexpected result: ` + result )
+	}
+}
+
+func TestGetNamespaceRegex(t *testing.T) {
+	var ns Namespace;
+	ns.Namespace = "features"
+	ns.Branch = "features/*"
+	result, err := getNamespace("features/38",[]Namespace{ns})
+	if err != nil {
+		t.Fatalf(`getNamespace returning an error`)
+	}
+	if result != "features" {
+		t.Fatalf(`Unexpected result: ` + result )
+	}
+}
+
+func TestGetNamespaceAsBranch(t *testing.T) {
+	var ns Namespace;
+	ns.Namespace = "as-branch"
+	ns.Branch = "features/*"
+	result, err := getNamespace("features/38",[]Namespace{ns})
+	if err != nil {
+		t.Fatalf(`getNamespace returning an error`)
+	}
+	if result != "features-38" {
+		t.Fatalf(`Unexpected result: ` + result )
+	}
+}
+
 func TestGetBuildConfNoRepoDirectory(t *testing.T) {
 	cloneLocation := fmt.Sprintf("%s%d", "/tmp/souptests/TestGetBuildConfNoRepoDirectory", time.Now().Unix())
 	_, err := getBuildConf(cloneLocation)
