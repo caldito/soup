@@ -24,7 +24,7 @@ jobs:
           name: "Test in arm64 machine"
           command: |
             curl -O https://dl.google.com/go/go1.18.1.linux-arm64.tar.gz
-            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-arm64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             make test
@@ -38,7 +38,7 @@ jobs:
           name: "Upload amd64 image to registry"
           command: |
             curl -O https://dl.google.com/go/go1.18.1.linux-amd64.tar.gz
-            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-arm64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             VERSION="${CIRCLE_TAG}"
@@ -84,6 +84,8 @@ workflows:
             tags:
               only: /^v.*/
       - push-amd64:
+          context:
+            - docker
           filters:
             tags:
               only: /^v.*/
@@ -91,6 +93,8 @@ workflows:
             - test-amd64
             - test-arm64
       - push-arm64:
+          context:
+            - docker
           filters:
             tags:
               only: /^v.*/
