@@ -4,7 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/caldito/soup.svg)](https://pkg.go.dev/github.com/caldito/soup)
 [![Go Report Card](https://goreportcard.com/badge/github.com/caldito/soup)](https://goreportcard.com/report/github.com/caldito/soup)
 [![release](https://img.shields.io/github/release/caldito/soup/all.svg)](https://github.com/caldito/soup/releases)
-![tests workflow](https://github.com/caldito/soup/actions/workflows/tests.yml/badge.svg)
+[![CircleCI](https://circleci.com/gh/caldito/soup/tree/main.svg?style=svg)](https://circleci.com/gh/caldito/soup/?branch=main)
 
 Soup is a GitOps operator for Kubernetes.
 
