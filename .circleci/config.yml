@@ -41,7 +41,7 @@ jobs:
             sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
-            VERSION="${CIRCLE_TAG}"
+            export VERSION="${CIRCLE_TAG}"
             make build-docker
             echo "${DOCKERHUB_PASSWORD}" | docker login -u pablogcaldito --password-stdin
             docker push pablogcaldito/soup:"${VERSION}"
@@ -61,7 +61,7 @@ jobs:
             sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-arm64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
-            VERSION="${CIRCLE_TAG}-arm64"
+            export VERSION="${CIRCLE_TAG}-arm64"
             make build-docker
             echo "${DOCKERHUB_PASSWORD}" | docker login -u pablogcaldito --password-stdin
             docker push pablogcaldito/soup:"${VERSION}"
