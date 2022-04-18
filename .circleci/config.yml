@@ -9,7 +9,7 @@ jobs:
       - deploy:
           name: "Test in amd64 machine"
           command: |
-            rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             make test
@@ -22,7 +22,7 @@ jobs:
       - deploy:
           name: "Test in arm64 machine"
           command: |
-            rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             make test
@@ -35,7 +35,7 @@ jobs:
       - deploy:
           name: "Upload amd64 image to registry"
           command: |
-            rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             VERSION="${CIRCLE_TAG}"
@@ -54,7 +54,7 @@ jobs:
       - deploy:
           name: "Upload arm64 image to registry"
           command: |
-            rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
             export PATH=$PATH:/usr/local/go/bin
             go version
             VERSION="${CIRCLE_TAG}-arm64"
@@ -71,8 +71,14 @@ workflows:
       - test-arm64
   push:
     jobs:
-      - test-amd64
-      - test-arm64
+      - test-amd64:
+          filters:
+            tags:
+              only: /^v.*/
+      - test-arm64:
+          filters:
+            tags:
+              only: /^v.*/
       - push-amd64:
           filters:
             tags:
