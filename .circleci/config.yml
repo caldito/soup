@@ -71,6 +71,8 @@ workflows:
       - test-arm64
   push:
     jobs:
+      - test-amd64
+      - test-arm64
       - push-amd64:
           filters:
             tags:
