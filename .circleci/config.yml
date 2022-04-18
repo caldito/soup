@@ -77,16 +77,22 @@ workflows:
     jobs:
       - test-amd64:
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
       - test-arm64:
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
       - push-amd64:
           context:
             - docker
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
           requires:
@@ -96,6 +102,8 @@ workflows:
           context:
             - docker
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
           requires:
