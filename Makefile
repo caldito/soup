@@ -7,7 +7,6 @@ GOTEST=$(GOCMD) test
 GOFMT=$(GOCMD) fmt
 BINARY_NAME=bin/soup
 SOURCE_NAME=cmd/soup/main.go
-VERSION=v0.3.1
 
 all: build
 
@@ -26,9 +25,6 @@ fmt:
 
 deps:
 	$(GODEPS) -d ./...
-
-build-podman: build
-	podman build . -t pablogcaldito/soup:$(VERSION)
 
 build-docker: build
 	docker build . -t pablogcaldito/soup:$(VERSION)
