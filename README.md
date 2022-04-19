@@ -37,6 +37,7 @@ curl -O https://raw.githubusercontent.com/caldito/soup/main/manifests/install.ym
 ```
 kubectl apply -f install.yml
 ```
+There is also support for arm64 clusters. To use it change the container image in the `install.yml` file from `pablogcaldito/soup:<version>` to `pablogcaldito/soup:arm64-<version>` before applying.
 
 ## Usage
 

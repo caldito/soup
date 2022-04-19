@@ -1,4 +1,3 @@
-ARM support
 Git authentication
 Delete resources when branches are deleted, customize this behaviour with the .soup.yml depending on the branch
 Having two modes: in and out of the cluster execution (not sure)
