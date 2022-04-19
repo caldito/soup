@@ -55,7 +55,7 @@ func processBranch(branchName string) error {
 		return nil
 	}
 	// Deployment module
-	err = deployment.Deploy(namespace, manifests, cloneLocation)
+	err = deployment.Deploy(namespace, manifests)
 	if err != nil {
 		fmt.Println("Error deploying")
 		panic(err)
