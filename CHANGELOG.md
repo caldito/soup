@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.4.0](https://github.com/caldito/soup/releases/tag/v0.4.0) - 2022-04-19
 ### Added
-- Add ARM64 support
+- [#13](https://github.com/caldito/soup/issues/13) Add ARM64 support
 - Use patterns for getting k8s manifests
 - Unit tests
 
