@@ -1,0 +1,111 @@
+version: 2.1
+jobs:
+  test-amd64:
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: medium
+    steps:
+      - checkout
+      - deploy:
+          name: "Test in amd64 machine"
+          command: |
+            curl -O https://dl.google.com/go/go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            go version
+            make test
+  test-arm64:
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - deploy:
+          name: "Test in arm64 machine"
+          command: |
+            curl -O https://dl.google.com/go/go1.18.1.linux-arm64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-arm64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            go version
+            make test
+  push-amd64:
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: medium
+    steps:
+      - checkout
+      - deploy:
+          name: "Upload amd64 image to registry"
+          command: |
+            curl -O https://dl.google.com/go/go1.18.1.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            go version
+            export VERSION="${CIRCLE_TAG}"
+            make build-docker
+            echo "${DOCKERHUB_PASSWORD}" | docker login -u pablogcaldito --password-stdin
+            docker push pablogcaldito/soup:"${VERSION}"
+            docker tag pablogcaldito/soup:"${VERSION}" pablogcaldito/soup:latest
+            docker push pablogcaldito/soup:latest
+            curl "https://sum.golang.org/lookup/github.com/caldito/soup@${VERSION}"
+  push-arm64:
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - deploy:
+          name: "Upload arm64 image to registry"
+          command: |
+            curl -O https://dl.google.com/go/go1.18.1.linux-arm64.tar.gz
+            sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.1.linux-arm64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            go version
+            export VERSION="${CIRCLE_TAG}-arm64"
+            make build-docker
+            echo "${DOCKERHUB_PASSWORD}" | docker login -u pablogcaldito --password-stdin
+            docker push pablogcaldito/soup:"${VERSION}"
+            docker tag pablogcaldito/soup:"${VERSION}" pablogcaldito/soup:latest-arm64
+            docker push pablogcaldito/soup:latest-arm64
+
+workflows:
+  test:
+    jobs:
+      - test-amd64
+      - test-arm64
+  push:
+    jobs:
+      - test-amd64:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - test-arm64:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - push-amd64:
+          context:
+            - docker
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+          requires:
+            - test-amd64
+            - test-arm64
+      - push-arm64:
+          context:
+            - docker
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+          requires:
+            - test-amd64
+            - test-arm64

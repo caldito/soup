@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func Deploy(namespace string, manifests []string, cloneLocation string) error {
+func Deploy(namespace string, manifests []string) error {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		fmt.Println("Error getting cluster config")
@@ -23,7 +23,7 @@ func Deploy(namespace string, manifests []string, cloneLocation string) error {
 		panic(err)
 	}
 	for _, manifest := range manifests {
-		err = k8s.DoSSA(ctx, config, namespace, cloneLocation+"/"+manifest)
+		err = k8s.DoSSA(ctx, config, namespace, manifest)
 		if err != nil {
 			fmt.Println("Error deploying the manifest " + manifest)
 			panic(err)

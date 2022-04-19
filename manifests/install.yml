@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
       - name: soup
-        image: pablogcaldito/soup:v0.3.1
+        image: pablogcaldito/soup:v0.4.0
         command: ["/bin/soup"]
         args:
           - "-repo=https://github.com/caldito/soup-test.git"
